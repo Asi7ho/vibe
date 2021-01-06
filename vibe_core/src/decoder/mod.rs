@@ -5,6 +5,8 @@ use crate::Sample;
 
 #[cfg(feature = "mp3")]
 mod mp3;
+#[cfg(feature = "wav")]
+mod wav;
 
 /// Audio decoder
 ///
@@ -88,7 +90,7 @@ impl FormatDecoder {
                 "flac" => requires "flac" for FormatDecoder::Flac(self::flac::FlacDecoder::open(path)?)
             )
         }
-        panic!("Error")
+        Err(())
     }
 
     #[inline]
