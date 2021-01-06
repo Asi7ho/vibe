@@ -8,21 +8,26 @@ use hound::{SampleFormat, WavReader, WavSpec};
 
 use crate::{AudioFormat, AudioInfo, Sample};
 
+/// Decoder for WAV files
 pub struct WavDecoder {
     reader: WavReader<BufReader<File>>,
     spec: WavSpec,
 }
 
 impl WavDecoder {
+    /// Open WAV file and create a decoder
     #[inline]
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
         let reader = WavReader::open(path).map_err(|_| ())?;
+        let spec = reader.spec();
+
         Ok(Self {
-            spec: reader.spec(),
-            reader,
+            reader: reader,
+            spec: spec,
         })
     }
 
+    /// Get the info
     #[inline]
     pub fn info(&self) -> AudioInfo {
         AudioInfo {
@@ -32,6 +37,7 @@ impl WavDecoder {
         }
     }
 
+    /// Create iterator over the samples
     pub fn into_samples(self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
         Ok(Box::new(WavSampleIterator {
             decoder: self.reader,
@@ -46,6 +52,7 @@ struct WavSampleIterator<R: Read> {
 impl<R: Read> Iterator for WavSampleIterator<R> {
     type Item = Result<Sample, ()>;
 
+    /// Get the next sample and convert it into f32 sample
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let spec = self.decoder.spec();
