@@ -1,9 +1,7 @@
 use minimp3::{Decoder, Error, Frame};
 use std::{fs::File, io::Read, path::Path};
 
-use crate::AudioFormat;
-use crate::AudioInfo;
-use crate::Sample;
+use crate::{AudioFormat, AudioInfo, Sample};
 
 ///Decoder for MP3 files
 pub struct Mp3Decoder {
