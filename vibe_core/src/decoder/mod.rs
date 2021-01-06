@@ -7,6 +7,8 @@ use crate::Sample;
 mod flac;
 #[cfg(feature = "mp3")]
 mod mp3;
+#[cfg(feature = "vorbis")]
+mod ogg;
 #[cfg(feature = "wav")]
 mod wav;
 
@@ -58,7 +60,7 @@ pub(crate) enum FormatDecoder {
     #[cfg(feature = "wav")]
     Wav(self::wav::WavDecoder),
     #[cfg(feature = "vorbis")]
-    Vorbis(self::vorbis::VorbisDecoder),
+    Vorbis(self::ogg::VorbisDecoder),
     #[cfg(feature = "mp3")]
     Mp3(self::mp3::Mp3Decoder),
     #[cfg(feature = "flac")]
@@ -87,7 +89,7 @@ impl FormatDecoder {
         if let Some(ext) = path.as_ref().extension().and_then(|ext| ext.to_str()) {
             get_decoder!(ext,
                 "wav" => requires "wav" for FormatDecoder::Wav(self::wav::WavDecoder::open(path)?),
-                "ogg" => requires "vorbis" for FormatDecoder::Vorbis(self::vorbis::VorbisDecoder::open(path)?),
+                "ogg" => requires "vorbis" for FormatDecoder::Vorbis(self::ogg::VorbisDecoder::open(path)?),
                 "mp3" => requires "mp3" for FormatDecoder::Mp3(self::mp3::Mp3Decoder::open(path)?),
                 "flac" => requires "flac" for FormatDecoder::Flac(self::flac::FlacDecoder::open(path)?)
             )
