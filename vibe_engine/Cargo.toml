@@ -1,0 +1,10 @@
+[package]
+name = "vibe_engine"
+version = "0.1.0"
+authors = ["Asi7ho <46624642+Asi7ho@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vibe_core = { path = "../vibe_core" }

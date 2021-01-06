@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "vibe_core",
+    "vibe_engine",
+    "vibe_gui",
+]
