@@ -3,6 +3,8 @@ use std::path::Path;
 use crate::AudioInfo;
 use crate::Sample;
 
+#[cfg(feature = "flac")]
+mod flac;
 #[cfg(feature = "mp3")]
 mod mp3;
 #[cfg(feature = "wav")]
