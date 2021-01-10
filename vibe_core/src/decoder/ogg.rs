@@ -56,19 +56,10 @@ struct OggSampleIterator<T: Read + Seek> {
     packet_cursor: usize,
 }
 
-impl<T: Read + Seek> OggSampleIterator<T> {
-    #[inline(always)]
-    fn next_packet(&mut self) -> Result<(), ()> {
-        self.packet_cursor = 0;
-        self.current_packet = match self.reader.read_dec_packet_itl() {
-            Ok(packet) => packet,
-            Err(_) => return Err(()),
-        };
-        Ok(())
-    }
-}
-
-impl<T: Read + Seek> Iterator for OggSampleIterator<T> {
+impl<R> Iterator for OggSampleIterator<R>
+where
+    R: Read + Seek,
+{
     type Item = Result<Sample, ()>;
 
     #[inline]
@@ -83,9 +74,11 @@ impl<T: Read + Seek> Iterator for OggSampleIterator<T> {
 
                     // Get the next packet if done reading this one
                     if self.packet_cursor >= packet.len() {
-                        if let Err(err) = self.next_packet() {
-                            return Some(Err(err));
-                        }
+                        self.packet_cursor = 0;
+                        self.current_packet = match self.reader.read_dec_packet_itl() {
+                            Ok(packet) => packet,
+                            Err(_) => return Some(Err(())),
+                        };
                     }
 
                     // Convert the sample and return it
@@ -93,9 +86,11 @@ impl<T: Read + Seek> Iterator for OggSampleIterator<T> {
                     return Some(Ok(sample_float));
                 }
                 None => {
-                    if let Err(err) = self.next_packet() {
-                        return Some(Err(err));
-                    }
+                    self.packet_cursor = 0;
+                    self.current_packet = match self.reader.read_dec_packet_itl() {
+                        Ok(packet) => packet,
+                        Err(_) => return Some(Err(())),
+                    };
                     continue;
                 }
             }
