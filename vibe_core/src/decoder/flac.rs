@@ -21,9 +21,9 @@ impl FlacDecoder {
         let channels = reader.streaminfo().channels as _;
 
         Ok(Self {
-            reader: reader,
-            sample_rate: sample_rate,
-            channels: channels,
+            reader,
+            sample_rate,
+            channels,
         })
     }
 
@@ -42,16 +42,19 @@ impl FlacDecoder {
     pub fn into_samples(self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
         let spec = self.reader.streaminfo();
 
+        let decoder = self.reader;
         let current_block: Vec<i32> =
             Vec::with_capacity(spec.max_block_size as usize * spec.channels as usize);
+        let current_block_len = 0;
         let max_sample_value = (i32::MAX >> (32 - spec.bits_per_sample)) as f32;
+        let block_cursor = 0;
 
         Ok(Box::new(FlacSampleIterator {
-            decoder: self.reader,
-            current_block: current_block,
-            current_block_len: 0,
-            max_sample_value: max_sample_value,
-            block_cursor: 0,
+            decoder,
+            current_block,
+            current_block_len,
+            max_sample_value,
+            block_cursor,
         }))
     }
 }

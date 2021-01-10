@@ -23,9 +23,9 @@ impl VorbisDecoder {
         let sample_rate = reader.ident_hdr.audio_sample_rate;
 
         Ok(Self {
-            reader: reader,
-            channels: channels,
-            sample_rate: sample_rate,
+            reader,
+            channels,
+            sample_rate,
         })
     }
 
@@ -41,11 +41,13 @@ impl VorbisDecoder {
     #[inline]
     pub fn into_samples(mut self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
         let current_packet = self.reader.read_dec_packet_itl().map_err(|_| ())?;
+        let reader = self.reader;
+        let packet_cursor = 0;
 
         Ok(Box::new(OggSampleIterator {
-            reader: self.reader,
-            current_packet: current_packet,
-            packet_cursor: 0,
+            reader,
+            current_packet,
+            packet_cursor,
         }))
     }
 }

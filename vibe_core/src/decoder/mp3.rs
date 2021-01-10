@@ -24,10 +24,10 @@ impl Mp3Decoder {
         let channels = first_frame.channels;
 
         Ok(Mp3Decoder {
-            decoder: decoder,
-            first_frame: first_frame,
-            sample_rate: sample_rate,
-            channels: channels,
+            decoder,
+            first_frame,
+            sample_rate,
+            channels,
         })
     }
 
