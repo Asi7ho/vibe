@@ -8,3 +8,6 @@ edition = "2018"
 
 [dependencies]
 vibe_core = { path = "../vibe_core" }
+
+cpal = "0.13.1"
+crossbeam = "0.8.0"
