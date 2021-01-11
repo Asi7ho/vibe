@@ -1,10 +1,13 @@
 use std::fmt::Display;
+use std::time::Duration;
+
 /// Information about an opened audio file.
 #[derive(Debug, Clone)]
 pub struct AudioInfo {
     pub sample_rate: u32,
     pub channels: usize,
     pub format: AudioFormat,
+    pub duration: Option<Duration>,
 }
 
 impl AudioInfo {
@@ -25,6 +28,13 @@ impl AudioInfo {
     pub fn format(&self) -> AudioFormat {
         self.format
     }
+
+    /// Get the original format of the audio.
+    #[inline]
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
 }
 
 /// Indicates the format of an audio stream.

@@ -1,32 +1,55 @@
-use std::{fs::File, io::Read, io::Seek, path::Path};
+use std::{
+    io::Read,
+    io::{Seek, SeekFrom},
+};
+
+use std::time::Duration;
 
 use lewton::inside_ogg::OggStreamReader;
 
 use crate::{AudioFormat, AudioInfo, Sample};
 
-pub struct VorbisDecoder {
-    reader: OggStreamReader<File>,
+pub struct VorbisDecoder<R>
+where
+    R: Read + Seek,
+{
+    reader: OggStreamReader<R>,
     channels: usize,
     sample_rate: u32,
+    current_packet: Option<Vec<i16>>,
+    packet_cursor: usize,
 }
 
-impl VorbisDecoder {
+impl<R> VorbisDecoder<R>
+where
+    R: Read + Seek,
+{
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
-        let f = File::open(path).map_err(|_| ())?;
-        let reader = match OggStreamReader::new(f) {
-            Ok(reader) => reader,
-            Err(_) => return Err(()),
-        };
+    pub fn new(mut data: R) -> Result<Self, R> {
+        if !is_ogg(data.by_ref()) {
+            return Err(data);
+        }
+
+        let mut reader = OggStreamReader::new(data).unwrap();
 
         let channels = reader.ident_hdr.audio_channels as usize;
         let sample_rate = reader.ident_hdr.audio_sample_rate;
+        let current_packet = reader.read_dec_packet_itl().unwrap();
+        let packet_cursor = 0;
 
         Ok(Self {
             reader,
             channels,
             sample_rate,
+            current_packet,
+            packet_cursor,
         })
+    }
+
+    /// Get duration audio file
+    #[inline]
+    fn duration(&self) -> Option<Duration> {
+        None
     }
 
     #[inline]
@@ -35,30 +58,12 @@ impl VorbisDecoder {
             format: AudioFormat::Ogg,
             sample_rate: self.sample_rate,
             channels: self.channels,
+            duration: self.duration(),
         }
     }
-
-    #[inline]
-    pub fn into_samples(mut self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
-        let current_packet = self.reader.read_dec_packet_itl().map_err(|_| ())?;
-        let reader = self.reader;
-        let packet_cursor = 0;
-
-        Ok(Box::new(OggSampleIterator {
-            reader,
-            current_packet,
-            packet_cursor,
-        }))
-    }
 }
 
-struct OggSampleIterator<T: Read + Seek> {
-    reader: OggStreamReader<T>,
-    current_packet: Option<Vec<i16>>,
-    packet_cursor: usize,
-}
-
-impl<R> Iterator for OggSampleIterator<R>
+impl<R> Iterator for VorbisDecoder<R>
 where
     R: Read + Seek,
 {
@@ -99,4 +104,15 @@ where
         }
         None
     }
+}
+
+fn is_ogg<R>(mut data: R) -> bool
+where
+    R: Read + Seek,
+{
+    let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
+    let is_ogg = OggStreamReader::new(data.by_ref()).is_ok();
+    data.seek(SeekFrom::Start(stream_pos)).unwrap();
+
+    return is_ogg;
 }

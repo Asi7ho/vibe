@@ -1,34 +1,51 @@
 use minimp3::{Decoder, Error, Frame};
-use std::{fs::File, io::Read, path::Path};
+use std::io::{Read, Seek, SeekFrom};
+use std::time::Duration;
 
 use crate::{AudioFormat, AudioInfo, Sample};
 
 ///Decoder for MP3 files
-pub struct Mp3Decoder {
-    decoder: Decoder<File>,
-    first_frame: Frame,
-    sample_rate: u32,
+pub struct Mp3Decoder<R>
+where
+    R: Read + Seek,
+{
+    decoder: Decoder<R>,
     channels: usize,
+    sample_rate: u32,
+    current_frame: Frame,
+    frame_cursor: usize,
 }
 
-impl Mp3Decoder {
+impl<R> Mp3Decoder<R>
+where
+    R: Read + Seek,
+{
     /// Open MP3 file and create a decoder
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
-        let f = File::open(path).map_err(|_| ())?;
+    pub fn new(mut data: R) -> Result<Self, R> {
+        if !is_mp3(data.by_ref()) {
+            return Err(data);
+        }
+        let mut decoder = Decoder::new(data);
 
-        let mut decoder = Decoder::new(f);
-
-        let first_frame = decoder.next_frame().map_err(|_| ())?;
-        let sample_rate = first_frame.sample_rate as u32;
-        let channels = first_frame.channels;
+        let current_frame = decoder.next_frame().unwrap();
+        let sample_rate = current_frame.sample_rate as u32;
+        let channels = current_frame.channels;
+        let frame_cursor = 0;
 
         Ok(Mp3Decoder {
             decoder,
-            first_frame,
-            sample_rate,
             channels,
+            sample_rate,
+            current_frame,
+            frame_cursor,
         })
+    }
+
+    /// Get duration audio file
+    #[inline]
+    fn duration(&self) -> Option<Duration> {
+        None
     }
 
     /// Get the info
@@ -38,31 +55,15 @@ impl Mp3Decoder {
             format: AudioFormat::Mp3,
             sample_rate: self.sample_rate,
             channels: self.channels,
+            duration: self.duration(),
         }
     }
-
-    /// Create iterator over the samples
-    #[inline]
-    pub fn into_samples(self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
-        Ok(Box::new(Mp3SampleIterator {
-            decoder: self.decoder,
-            channels: self.channels,
-            sample_rate: self.sample_rate,
-            current_frame: self.first_frame,
-            frame_cursor: 0,
-        }))
-    }
 }
 
-struct Mp3SampleIterator<R: Read> {
-    decoder: Decoder<R>,
-    channels: usize,
-    sample_rate: u32,
-    current_frame: Frame,
-    frame_cursor: usize,
-}
-
-impl<R: Read> Iterator for Mp3SampleIterator<R> {
+impl<R> Iterator for Mp3Decoder<R>
+where
+    R: Read + Seek,
+{
     type Item = Result<Sample, ()>;
 
     #[inline]
@@ -95,4 +96,15 @@ impl<R: Read> Iterator for Mp3SampleIterator<R> {
         self.frame_cursor += 1;
         Some(Ok(sample_float))
     }
+}
+
+fn is_mp3<R>(mut data: R) -> bool
+where
+    R: Read + Seek,
+{
+    let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
+    let is_mp3 = Decoder::new(data.by_ref()).next_frame().is_ok();
+    data.seek(SeekFrom::Start(stream_pos)).unwrap();
+
+    return is_mp3;
 }

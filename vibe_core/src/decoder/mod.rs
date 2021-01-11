@@ -1,7 +1,6 @@
-use std::path::Path;
+use std::io::{Read, Seek};
 
-use crate::AudioInfo;
-use crate::Sample;
+use crate::{AudioInfo, Sample};
 
 #[cfg(feature = "flac")]
 mod flac;
@@ -16,99 +15,97 @@ mod wav;
 ///
 /// For now support only mp3
 /// In the future will support FLAC, WAV, OGG and MP3
-pub struct Decoder {
-    decoder: FormatDecoder,
+pub struct Decoder<R>
+where
+    R: Read + Seek,
+{
+    decoder: FormatDecoder<R>,
 }
 
-impl Decoder {
+impl<R> Decoder<R>
+where
+    R: Read + Seek,
+{
     /// Used to open an audio file, the right decoder is chosen by looking at the extention of the file
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
+    pub fn new(data: R) -> Result<Self, R> {
         Ok(Self {
-            decoder: FormatDecoder::open(path)?,
+            decoder: FormatDecoder::new(data)?,
         })
     }
-}
 
-impl Decoder {
-    /// Get the info of the file (Format, Sampling rate and Number of channels)
     #[inline]
     pub fn info(&self) -> AudioInfo {
         self.decoder.info()
     }
-
-    /// Return an iterator over the samples
-    #[inline]
-    pub fn into_samples(self) -> Result<SampleIterator, ()> {
-        self.decoder.into_samples()
-    }
 }
-/// Sample iterator to read the decoded samples (the channels are interleaved)
-pub struct SampleIterator(Box<dyn Iterator<Item = Result<Sample, ()>>>);
 
-impl Iterator for SampleIterator {
+impl<R> Iterator for Decoder<R>
+where
+    R: Read + Seek,
+{
     type Item = Result<Sample, ()>;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
+        self.decoder.next()
     }
 }
 
 /// Choose the right decoder
-pub(crate) enum FormatDecoder {
+pub(crate) enum FormatDecoder<R>
+where
+    R: Read + Seek,
+{
     #[cfg(feature = "wav")]
-    Wav(self::wav::WavDecoder),
+    Wav(self::wav::WavDecoder<R>),
     #[cfg(feature = "vorbis")]
-    Vorbis(self::ogg::VorbisDecoder),
+    Vorbis(self::ogg::VorbisDecoder<R>),
     #[cfg(feature = "mp3")]
-    Mp3(self::mp3::Mp3Decoder),
+    Mp3(self::mp3::Mp3Decoder<R>),
     #[cfg(feature = "flac")]
-    Flac(self::flac::FlacDecoder),
+    Flac(self::flac::FlacDecoder<R>),
 }
 
-impl FormatDecoder {
+impl<R> FormatDecoder<R>
+where
+    R: Read + Seek,
+{
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
-        // Check if feature exists
-        macro_rules! get_decoder {
-            ($in_ext:expr, $($ext:literal => requires $feature:literal for $init:expr),*) => {
-                match $in_ext {
-                    $(
-                        #[cfg(feature = $feature)]
-                        $ext => { return Ok($init) }
-                        #[cfg(not(feature = $feature))]
-                        $ext => { panic!("Feature not implemented yet") }
-                    )*
-                    other => panic!("Error: {:?}", other.to_owned())
-                }
+    pub fn new(data: R) -> Result<Self, R> {
+        #[cfg(feature = "wav")]
+        let data = match self::wav::WavDecoder::new(data) {
+            Ok(decoder) => {
+                return Ok(FormatDecoder::Wav(decoder));
             }
-        }
+            Err(err) => err,
+        };
 
-        // Look at the extention
-        if let Some(ext) = path.as_ref().extension().and_then(|ext| ext.to_str()) {
-            get_decoder!(ext,
-                "wav" => requires "wav" for FormatDecoder::Wav(self::wav::WavDecoder::open(path)?),
-                "ogg" => requires "vorbis" for FormatDecoder::Vorbis(self::ogg::VorbisDecoder::open(path)?),
-                "mp3" => requires "mp3" for FormatDecoder::Mp3(self::mp3::Mp3Decoder::open(path)?),
-                "flac" => requires "flac" for FormatDecoder::Flac(self::flac::FlacDecoder::open(path)?)
-            )
-        }
-        Err(())
-    }
+        #[cfg(feature = "flac")]
+        let data = match self::flac::FlacDecoder::new(data) {
+            Ok(decoder) => {
+                return Ok(FormatDecoder::Flac(decoder));
+            }
+            Err(err) => err,
+        };
 
-    #[inline]
-    pub fn into_samples(self) -> Result<SampleIterator, ()> {
-        match self {
-            #[cfg(feature = "wav")]
-            FormatDecoder::Wav(d) => Ok(SampleIterator(d.into_samples()?)),
-            #[cfg(feature = "vorbis")]
-            FormatDecoder::Vorbis(d) => Ok(SampleIterator(d.into_samples()?)),
-            #[cfg(feature = "mp3")]
-            FormatDecoder::Mp3(d) => Ok(SampleIterator(d.into_samples()?)),
-            #[cfg(feature = "flac")]
-            FormatDecoder::Flac(d) => Ok(SampleIterator(d.into_samples()?)),
-        }
+        #[cfg(feature = "vorbis")]
+        let data = match self::ogg::VorbisDecoder::new(data) {
+            Ok(decoder) => {
+                return Ok(FormatDecoder::Vorbis(decoder));
+            }
+            Err(err) => err,
+        };
+
+        #[cfg(feature = "mp3")]
+        let data = match self::mp3::Mp3Decoder::new(data) {
+            Ok(decoder) => {
+                return Ok(FormatDecoder::Mp3(decoder));
+            }
+            Err(err) => err,
+        };
+
+        Err(data)
     }
 
     #[inline]
@@ -122,6 +119,27 @@ impl FormatDecoder {
             FormatDecoder::Mp3(d) => d.info(),
             #[cfg(feature = "flac")]
             FormatDecoder::Flac(d) => d.info(),
+        }
+    }
+}
+
+impl<R> Iterator for FormatDecoder<R>
+where
+    R: Read + Seek,
+{
+    type Item = Result<Sample, ()>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            #[cfg(feature = "wav")]
+            FormatDecoder::Wav(d) => d.next(),
+            #[cfg(feature = "vorbis")]
+            FormatDecoder::Vorbis(d) => d.next(),
+            #[cfg(feature = "flac")]
+            FormatDecoder::Flac(d) => d.next(),
+            #[cfg(feature = "mp3")]
+            FormatDecoder::Mp3(d) => d.next(),
         }
     }
 }

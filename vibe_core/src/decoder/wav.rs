@@ -1,27 +1,42 @@
-use std::{
-    fs::File,
-    io::{BufReader, Read},
-    path::Path,
-};
+use std::io::{Read, Seek, SeekFrom};
+use std::time::Duration;
 
 use hound::{SampleFormat, WavReader, WavSpec};
 
 use crate::{AudioFormat, AudioInfo, Sample};
 
 /// Decoder for WAV files
-pub struct WavDecoder {
-    reader: WavReader<BufReader<File>>,
+pub struct WavDecoder<R>
+where
+    R: Read + Seek,
+{
+    reader: WavReader<R>,
     spec: WavSpec,
 }
 
-impl WavDecoder {
+impl<R> WavDecoder<R>
+where
+    R: Read + Seek,
+{
     /// Open WAV file and create a decoder
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
-        let reader = WavReader::open(path).map_err(|_| ())?;
+    pub fn new(mut data: R) -> Result<Self, R> {
+        if !is_wav(data.by_ref()) {
+            return Err(data);
+        }
+
+        let reader = WavReader::new(data).unwrap();
         let spec = reader.spec();
 
         Ok(Self { reader, spec })
+    }
+
+    /// Get duration audio file
+    #[inline]
+    fn duration(&self) -> Option<Duration> {
+        let ms = self.reader.len() as u64 * 1000
+            / (self.spec.channels as u64 * self.spec.sample_rate as u64);
+        Some(Duration::from_millis(ms))
     }
 
     /// Get the info
@@ -31,21 +46,15 @@ impl WavDecoder {
             format: AudioFormat::Wav,
             sample_rate: self.spec.sample_rate,
             channels: self.spec.channels as usize,
+            duration: self.duration(),
         }
     }
-
-    /// Create iterator over the samples
-    pub fn into_samples(self) -> Result<Box<dyn Iterator<Item = Result<Sample, ()>>>, ()> {
-        let reader = self.reader;
-        Ok(Box::new(WavSampleIterator { reader }))
-    }
 }
 
-struct WavSampleIterator<R: Read> {
-    reader: WavReader<R>,
-}
-
-impl<R: Read> Iterator for WavSampleIterator<R> {
+impl<R> Iterator for WavDecoder<R>
+where
+    R: Read + Seek,
+{
     type Item = Result<Sample, ()>;
 
     /// Get the next sample and convert it into f32 sample
@@ -88,4 +97,16 @@ impl<R: Read> Iterator for WavSampleIterator<R> {
             }
         }
     }
+}
+
+/// Returns true if the stream contains Flac data, then resets it to where it was.
+fn is_wav<R>(mut data: R) -> bool
+where
+    R: Read + Seek,
+{
+    let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
+    let is_wav = WavReader::new(data.by_ref()).is_ok();
+    data.seek(SeekFrom::Start(stream_pos)).unwrap();
+
+    return is_wav;
 }
