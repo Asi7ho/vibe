@@ -28,6 +28,7 @@ where
             return Err(data);
         }
 
+        // TODO: Is there a better way to compute duration
         let duration = compute_duration(data.by_ref());
 
         let mut decoder = Decoder::new(data);
