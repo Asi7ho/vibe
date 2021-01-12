@@ -12,6 +12,7 @@ where
     decoder: Decoder<R>,
     channels: usize,
     sample_rate: u32,
+    duration: Option<Duration>,
     current_frame: Frame,
     frame_cursor: usize,
 }
@@ -26,6 +27,9 @@ where
         if !is_mp3(data.by_ref()) {
             return Err(data);
         }
+
+        let duration = compute_duration(data.by_ref());
+
         let mut decoder = Decoder::new(data);
 
         let current_frame = decoder.next_frame().unwrap();
@@ -37,6 +41,7 @@ where
             decoder,
             channels,
             sample_rate,
+            duration,
             current_frame,
             frame_cursor,
         })
@@ -45,7 +50,7 @@ where
     /// Get duration audio file
     #[inline]
     fn duration(&self) -> Option<Duration> {
-        None
+        self.duration
     }
 
     /// Get the info
@@ -107,4 +112,31 @@ where
     data.seek(SeekFrom::Start(stream_pos)).unwrap();
 
     return is_mp3;
+}
+
+/// Compute duration
+fn compute_duration<R>(mut data: R) -> Option<Duration>
+where
+    R: Read + Seek,
+{
+    let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
+
+    let mut decoder = Decoder::new(data.by_ref());
+
+    let mut duration: u64 = 0;
+    loop {
+        match decoder.next_frame() {
+            Ok(Frame {
+                data,
+                sample_rate,
+                channels,
+                ..
+            }) => duration += data.len() as u64 * 1_000 / (channels as u64 * sample_rate as u64),
+            Err(Error::Eof) => break,
+            Err(e) => panic!("{:?}", e),
+        }
+    }
+
+    data.seek(SeekFrom::Start(stream_pos)).unwrap();
+    return Some(Duration::from_millis(duration));
 }

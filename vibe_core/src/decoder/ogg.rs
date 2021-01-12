@@ -16,6 +16,7 @@ where
     reader: OggStreamReader<R>,
     channels: usize,
     sample_rate: u32,
+    duration: Option<Duration>,
     current_packet: Option<Vec<i16>>,
     packet_cursor: usize,
 }
@@ -30,6 +31,8 @@ where
             return Err(data);
         }
 
+        let duration = compute_duration(data.by_ref());
+
         let mut reader = OggStreamReader::new(data).unwrap();
 
         let channels = reader.ident_hdr.audio_channels as usize;
@@ -41,6 +44,7 @@ where
             reader,
             channels,
             sample_rate,
+            duration,
             current_packet,
             packet_cursor,
         })
@@ -49,7 +53,7 @@ where
     /// Get duration audio file
     #[inline]
     fn duration(&self) -> Option<Duration> {
-        None
+        self.duration
     }
 
     #[inline]
@@ -115,4 +119,25 @@ where
     data.seek(SeekFrom::Start(stream_pos)).unwrap();
 
     return is_ogg;
+}
+
+/// Compute duration
+fn compute_duration<R>(mut data: R) -> Option<Duration>
+where
+    R: Read + Seek,
+{
+    let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
+
+    let mut reader = OggStreamReader::new(data.by_ref()).unwrap();
+    let channels = reader.ident_hdr.audio_channels as u64;
+    let sample_rate = reader.ident_hdr.audio_sample_rate as u64;
+    let sample_channel = channels * sample_rate;
+
+    let mut duration: u64 = 0;
+    while let Some(pck_samples) = reader.read_dec_packet_itl().unwrap() {
+        duration += pck_samples.len() as u64 * 1_000 / sample_channel;
+    }
+
+    data.seek(SeekFrom::Start(stream_pos)).unwrap();
+    return Some(Duration::from_millis(duration));
 }
