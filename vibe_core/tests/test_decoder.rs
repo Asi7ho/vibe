@@ -16,7 +16,7 @@ mod tests_decoder {
         assert_eq!("MP3", format!("{}", info.format()));
         assert_eq!(info.sample_rate(), 44100); // Sample rate is just
         assert_eq!(info.channels(), 2); // Number of channels is just
-                                        // assert_eq!(info.duration(), Some(Duration::from_millis(3016))); //Approximate duration of audio file
+        assert_eq!(info.duration(), Some(Duration::from_millis(3042))); //Approximate duration of audio file
     }
 
     #[test]
@@ -58,6 +58,6 @@ mod tests_decoder {
         assert_eq!("OGG", format!("{}", info.format()));
         assert_eq!(info.sample_rate(), 44100); // Sample rate is just
         assert_eq!(info.channels(), 2); // Number of channels is just
-                                        // assert_eq!(info.duration(), Some(Duration::from_millis(2963))); //Approximate duration of audio file
+        assert_eq!(info.duration(), Some(Duration::from_millis(2963))); //Approximate duration of audio file
     }
 }
