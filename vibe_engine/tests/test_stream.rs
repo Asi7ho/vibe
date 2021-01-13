@@ -7,7 +7,7 @@ mod tests_stream {
     #[test]
 
     fn test_stream_mp3() {
-        let file = std::fs::File::open("tests/sounds/Test1.mp3").unwrap();
+        let file = File::open("tests/sounds/Test1.mp3").unwrap();
         let output_stream = OutputStream::new().unwrap();
         output_stream.run::<f32, File>(file).unwrap();
     }
@@ -15,7 +15,7 @@ mod tests_stream {
     #[test]
 
     fn test_stream_wav() {
-        let file = std::fs::File::open("tests/sounds/Test1.wav").unwrap();
+        let file = File::open("tests/sounds/Test1.wav").unwrap();
         let output_stream = OutputStream::new().unwrap();
         output_stream.run::<f32, File>(file).unwrap();
     }
@@ -23,7 +23,7 @@ mod tests_stream {
     #[test]
 
     fn test_stream_ogg() {
-        let file = std::fs::File::open("tests/sounds/Test1.ogg").unwrap();
+        let file = File::open("tests/sounds/Test1.ogg").unwrap();
         let output_stream = OutputStream::new().unwrap();
         output_stream.run::<f32, File>(file).unwrap();
     }
@@ -31,7 +31,7 @@ mod tests_stream {
     #[test]
 
     fn test_stream_flac() {
-        let file = std::fs::File::open("tests/sounds/Test1.flac").unwrap();
+        let file = File::open("tests/sounds/Test1.flac").unwrap();
         let output_stream = OutputStream::new().unwrap();
         output_stream.run::<f32, File>(file).unwrap();
     }
