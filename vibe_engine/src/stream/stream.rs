@@ -1,42 +1,37 @@
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
-    Device, StreamConfig, SupportedStreamConfig,
+    Stream, StreamConfig,
 };
-use std::io::{BufReader, Read, Seek};
+use std::{
+    fs::File,
+    io::{Read, Seek},
+    time::Duration,
+};
 use vibe_core::decoder::Decoder;
 
 pub struct OutputStream {
-    device: Device,
-    config: SupportedStreamConfig,
+    stream: Stream,
+    duration: Option<Duration>,
 }
 
 impl OutputStream {
     /// Returns a new stream using the default output device.
-    pub fn new() -> Result<Self, ()> {
+    pub fn new<T>(mut decoder: Decoder<File>) -> Result<Self, ()>
+    where
+        T: cpal::Sample,
+    {
         let host = cpal::default_host();
         let device = host
             .default_output_device()
             .expect("no output device available");
 
         let config = device.default_output_config().unwrap();
-
-        Ok(Self { device, config })
-    }
-
-    pub fn run<T, R>(self, data: R) -> Result<(), ()>
-    where
-        T: cpal::Sample,
-        R: Read + Seek + Send + 'static,
-    {
-        let mut decoder = Decoder::new(BufReader::new(data)).ok().unwrap();
-
-        let device = self.device;
-        let config: StreamConfig = self.config.into();
+        let config: StreamConfig = config.into();
 
         let channels = config.channels as usize;
-        let info = decoder.info();
 
-        let duration = info.duration().unwrap();
+        let info = decoder.info();
+        let duration = info.duration();
 
         let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
@@ -50,11 +45,16 @@ impl OutputStream {
             )
             .map_err(|_| ())?;
 
-        stream.play().map_err(|_| ())?;
+        Ok(Self { stream, duration })
+    }
 
-        std::thread::sleep(duration);
+    pub fn play(self) {
+        self.stream.play().unwrap();
+        std::thread::sleep(self.duration.unwrap());
+    }
 
-        Ok(())
+    pub fn pause(self) {
+        self.stream.pause().unwrap();
     }
 }
 
