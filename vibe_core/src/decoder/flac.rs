@@ -16,6 +16,7 @@ where
     duration: Option<Duration>,
     current_block: Vec<i32>,
     current_block_len: usize,
+    current_block_channel_len: usize,
     max_sample_value: f32,
     block_cursor: usize,
 }
@@ -40,6 +41,7 @@ where
         let current_block: Vec<i32> =
             Vec::with_capacity(spec.max_block_size as usize * spec.channels as usize);
         let current_block_len = 0;
+        let current_block_channel_len = 1;
         let max_sample_value = (i32::MAX >> (32 - spec.bits_per_sample)) as f32;
         let block_cursor = 0;
         let duration = spec
@@ -53,6 +55,7 @@ where
             duration,
             current_block,
             current_block_len,
+            current_block_channel_len,
             max_sample_value,
             block_cursor,
         })
@@ -87,8 +90,12 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if self.block_cursor < self.current_block_len {
-                let sample_float =
-                    self.current_block[self.block_cursor] as f32 / self.max_sample_value;
+                let real_cursor = (self.block_cursor % self.channels as usize)
+                    * self.current_block_channel_len
+                    + self.block_cursor / self.channels as usize;
+
+                let sample_float = self.current_block[real_cursor] as f32 / self.max_sample_value;
+
                 self.block_cursor += 1;
                 return Some(Ok(sample_float));
             }
@@ -98,6 +105,7 @@ where
             match self.reader.blocks().read_next_or_eof(block_buffer) {
                 Ok(Some(block)) => {
                     self.current_block_len = block.len() as _;
+                    self.current_block_channel_len = (block.len() / block.channels()) as usize;
                     self.current_block = block.into_buffer();
                 }
                 _ => return None,
