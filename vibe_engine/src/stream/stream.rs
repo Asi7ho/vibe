@@ -26,9 +26,6 @@ impl AudioStream {
     {
         let (tx, rx) = unbounded();
 
-        // let info = decoder.info();
-        // let duration = info.duration().unwrap();
-
         std::thread::spawn(move || {
             let stream = create_stream::<T, R>(decoder);
 

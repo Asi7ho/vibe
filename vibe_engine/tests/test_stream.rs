@@ -19,8 +19,12 @@ mod tests_stream {
         audio_stream.play();
 
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(1000));
+            std::thread::sleep(std::time::Duration::from_millis(500));
             audio_stream.pause();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.play();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.stop();
         });
 
         std::thread::sleep(duration);
@@ -40,8 +44,12 @@ mod tests_stream {
         audio_stream.play();
 
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(1000));
+            std::thread::sleep(std::time::Duration::from_millis(500));
             audio_stream.pause();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.play();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.stop();
         });
 
         std::thread::sleep(duration);
@@ -61,8 +69,12 @@ mod tests_stream {
         audio_stream.play();
 
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(1000));
+            std::thread::sleep(std::time::Duration::from_millis(500));
             audio_stream.pause();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.play();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.stop();
         });
 
         std::thread::sleep(duration);
@@ -82,8 +94,12 @@ mod tests_stream {
         audio_stream.play();
 
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(1000));
+            std::thread::sleep(std::time::Duration::from_millis(500));
             audio_stream.pause();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.play();
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            audio_stream.stop();
         });
 
         std::thread::sleep(duration);
