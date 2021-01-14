@@ -1,3 +1,3 @@
 mod stream;
 
-pub use self::stream::OutputStream;
+pub use self::stream::AudioStream;
