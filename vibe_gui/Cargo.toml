@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 vibe_core = { path = "../vibe_core" }
 vibe_engine = { path = "../vibe_engine" }
+
+druid = { version = "0.7", features = ["im"]}
