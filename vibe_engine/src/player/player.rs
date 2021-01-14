@@ -1,71 +1,45 @@
-use std::{
-    fs::File,
-    sync::atomic::{AtomicBool, Ordering},
-    sync::Arc,
-};
+use std::fs::File;
 
-use crossbeam::queue::SegQueue;
 use vibe_core::decoder::Decoder;
 
-use crate::stream::OutputStream;
+use crate::stream::AudioStream;
 
-struct Controls {
-    pause: AtomicBool,
-    stopped: AtomicBool,
-}
 pub struct Player {
-    queue: Arc<SegQueue<File>>,
-    controls: Arc<Controls>,
+    stream: Option<AudioStream>,
 }
 
 impl Player {
     #[inline]
     pub fn new() -> Result<Self, ()> {
-        let queue = Arc::new(SegQueue::new());
-        let controls = Arc::new(Controls {
-            pause: AtomicBool::new(false),
-            stopped: AtomicBool::new(false),
-        });
-
-        Ok(Self { queue, controls })
+        Ok(Self { stream: None })
     }
 
-    #[inline]
-    pub fn add_to_queue(&mut self, data: File) {
-        self.queue.push(data);
+    pub fn play_audio(&mut self, path: &str) {
+        if self.stream.is_some() {
+            self.stream.as_ref().unwrap().stop();
+        }
+
+        let file = File::open(path).expect("File not found");
+        let decoder = Decoder::new(file).expect("Decoding error");
+
+        self.stream = Some(AudioStream::new::<f32, File>(decoder).unwrap());
     }
 
-    #[inline]
-    pub fn send_next_to_stream(&mut self) {
-        let next_audio = self.queue.pop().expect("No next audio");
-
-        let decoder = Decoder::new(next_audio).unwrap();
-        let stream = OutputStream::new::<f32>(decoder).unwrap();
-        stream.play()
+    pub fn play_stream(&self) {
+        if self.stream.is_some() {
+            self.stream.as_ref().unwrap().play();
+        }
     }
 
-    #[inline]
-    pub fn play(&self) {
-        self.controls.pause.store(false, Ordering::SeqCst);
+    pub fn pause_stream(&self) {
+        if self.stream.is_some() {
+            self.stream.as_ref().unwrap().pause();
+        }
     }
 
-    #[inline]
-    pub fn pause(&self) {
-        self.controls.pause.store(true, Ordering::SeqCst);
-    }
-
-    #[inline]
-    pub fn stop(&self) {
-        self.controls.stopped.store(true, Ordering::SeqCst);
-    }
-
-    #[inline]
-    pub fn is_paused(&self) -> bool {
-        self.controls.pause.load(Ordering::SeqCst)
-    }
-
-    #[inline]
-    pub fn is_stopped(&self) -> bool {
-        self.controls.stopped.load(Ordering::SeqCst)
+    pub fn stop_stream(&self) {
+        if self.stream.is_some() {
+            self.stream.as_ref().unwrap().stop();
+        }
     }
 }
