@@ -67,16 +67,29 @@ impl AudioStream {
     }
 }
 
-fn write_data<T, R>(output: &mut [T], channels: usize, decoder: &mut Decoder<R>)
+fn write_data<T, R>(output: &mut [T], channels: usize, ended: &mut bool, decoder: &mut Decoder<R>)
 where
     T: cpal::Sample,
     R: Read + Seek,
 {
     for frame in output.chunks_mut(channels) {
-        let value = &decoder.next().unwrap().expect("Error value");
-        let value: T = cpal::Sample::from::<f32>(value);
-        for sample in frame.iter_mut() {
-            *sample = value;
+        let value = &decoder.next();
+
+        if (*value).is_none() {
+            *ended = true;
+        }
+
+        if *ended {
+            let value: T = cpal::Sample::from::<f32>(&0.0);
+            for sample in frame.iter_mut() {
+                *sample = value;
+            }
+        } else {
+            let value = &value.unwrap().expect("Error value");
+            let value: T = cpal::Sample::from::<f32>(value);
+            for sample in frame.iter_mut() {
+                *sample = value;
+            }
         }
     }
 }
@@ -100,11 +113,13 @@ where
 
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
 
+    let mut ended = false;
+
     let stream = device
         .build_output_stream(
             &config,
             move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
-                write_data(data, channels, decoder.by_ref())
+                write_data(data, channels, &mut ended, decoder.by_ref())
             },
             err_fn,
         )
