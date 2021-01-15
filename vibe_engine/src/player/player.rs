@@ -4,6 +4,7 @@ use vibe_core::decoder::Decoder;
 
 use crate::stream::AudioStream;
 
+#[derive(Clone)]
 pub struct Player {
     stream: Option<AudioStream>,
 }
@@ -16,7 +17,8 @@ impl Player {
 
     pub fn play_audio(&mut self, path: &str) {
         if self.stream.is_some() {
-            self.stream.as_ref().unwrap().stop();
+            // self.stream.as_ref().unwrap().stop();
+            self.stream = None;
         }
 
         let file = File::open(path).expect("File not found");

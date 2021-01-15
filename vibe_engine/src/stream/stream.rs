@@ -13,6 +13,7 @@ pub enum Controls {
     Stop,
 }
 
+#[derive(Clone)]
 pub struct AudioStream {
     tx_stream: Sender<Controls>,
 }
@@ -29,20 +30,19 @@ impl AudioStream {
         std::thread::spawn(move || {
             let stream = create_stream::<T, R>(decoder);
 
-            stream.play().unwrap();
+            stream.pause().unwrap();
 
+            println!("Wait for reception");
             while let Ok(res) = rx.recv() {
+                println!("{:?}", res);
                 match res {
                     Controls::Pause => {
-                        println!("Pause");
                         stream.pause().unwrap();
                     }
                     Controls::Play => {
-                        println!("Play");
                         stream.play().unwrap();
                     }
                     Controls::Stop => {
-                        println!("Stop");
                         stream.pause().unwrap();
                         drop(stream);
                         break;
@@ -110,5 +110,6 @@ where
         )
         .unwrap();
 
+    println!("Stream built");
     stream
 }

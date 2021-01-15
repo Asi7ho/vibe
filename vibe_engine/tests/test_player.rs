@@ -1,12 +1,12 @@
 #[cfg(test)]
 
-mod tests_stream {
+mod tests_player {
 
     use vibe_engine::player::Player;
 
     #[test]
 
-    fn test_play() {
+    fn test_player() {
         let mut player = Player::new().unwrap();
         player.play_audio("tests/sounds/Test1.mp3");
 
