@@ -8,7 +8,8 @@ mod tests_player {
 
     fn test_player() {
         let mut player = Player::new().unwrap();
-        player.play_audio("tests/sounds/Test1.mp3");
+        player.create_stream("tests/sounds/Test1.mp3");
+        player.play_stream();
 
         std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(1000));
