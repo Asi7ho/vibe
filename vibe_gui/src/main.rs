@@ -10,7 +10,7 @@ use view::build_ui;
 pub fn main() {
     let main_window = WindowDesc::new(build_ui)
         .title("Vibe Player")
-        .window_size((400.0, 100.0));
+        .window_size((400.0, 50.0));
 
     let player = Player::new().unwrap();
     let initial_state = AppState::new(
