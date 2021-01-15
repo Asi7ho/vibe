@@ -1,5 +1,4 @@
 [workspace]
-
 members = [
     "vibe_core",
     "vibe_engine",
