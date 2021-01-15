@@ -1,11 +1,11 @@
 use druid::{
-    widget::{Button, Flex, Label},
+    widget::{Button, Flex, Label, ProgressBar},
     Widget, WidgetExt,
 };
 
 use crate::data::*;
 
-fn track() -> impl Widget<AppState> {
+fn track_info() -> impl Widget<AppState> {
     let filename = Label::raw().lens(AppState::filename);
 
     Flex::row().with_child(filename)
@@ -34,6 +34,22 @@ fn buttons() -> impl Widget<AppState> {
         .with_child(plus_controller)
         .with_child(play_pause_controller)
         .with_child(stop_controller)
+}
+
+fn progress_bar() -> impl Widget<AppState> {
+    let progressbar = ProgressBar::new().lens(AppState::progress);
+
+    Flex::row()
+        .with_child(progressbar)
+        .with_child(Label::new(|data: &AppState, _: &_| {
+            format!("{:.1}%", data.get_progress() * 1000.0)
+        }))
+}
+
+fn track() -> impl Widget<AppState> {
+    Flex::column()
+        .with_child(track_info())
+        .with_child(progress_bar())
 }
 
 pub fn build_ui() -> impl Widget<AppState> {

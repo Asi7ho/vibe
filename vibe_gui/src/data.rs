@@ -11,6 +11,7 @@ pub struct AppState {
     stop: bool,
     filename: String,
     path: String,
+    progress: f64,
     duration: u64,
 }
 
@@ -35,6 +36,7 @@ impl AppState {
                 stop: false,
                 filename: filename.into(),
                 path: path.into(),
+                progress: 0.0,
                 duration,
             }
         } else {
@@ -44,6 +46,7 @@ impl AppState {
                 stop: false,
                 filename: "".into(),
                 path: "".into(),
+                progress: 0.0,
                 duration: 0,
             }
         }
@@ -51,6 +54,10 @@ impl AppState {
 
     pub fn get_play(&self) -> bool {
         self.play
+    }
+
+    pub fn get_progress(&self) -> f64 {
+        self.progress
     }
 
     fn play_action(&mut self) {
