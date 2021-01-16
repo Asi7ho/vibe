@@ -42,13 +42,14 @@ fn progress_bar() -> impl Widget<AppState> {
     Flex::row()
         .with_child(progressbar)
         .with_child(Label::new(|data: &AppState, _: &_| {
-            format!("{:.1}%", data.get_progress() * 1000.0)
+            format!("{:.1}%", data.get_progress() * 100.0)
         }))
 }
 
 fn track() -> impl Widget<AppState> {
     Flex::column()
         .with_child(track_info())
+        .with_spacer(2.0)
         .with_child(progress_bar())
 }
 

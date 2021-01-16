@@ -1,12 +1,14 @@
-use std::path::Path;
+use std::{fs::File, path::Path};
 
 use druid::{Data, Env, EventCtx, Lens};
+use vibe_core::decoder::Decoder;
 use vibe_engine::player::Player;
 
 #[derive(Clone, Data, Lens)]
 pub struct AppState {
     #[data(ignore)]
     player: Option<Player>,
+
     play: bool,
     stop: bool,
     filename: String,
@@ -25,9 +27,12 @@ impl AppState {
                 .unwrap();
 
             let path = path.as_ref().to_str().unwrap();
-            player.create_stream(path);
+            let file = File::open(path).expect("File not found");
+            let decoder = Decoder::new(file).expect("Decoding error");
+            let duration = decoder.info().duration().unwrap();
 
-            let duration = player.stream_duration().unwrap();
+            player.create_stream(decoder);
+
             let duration = duration.as_millis() as u64;
 
             Self {
@@ -61,15 +66,18 @@ impl AppState {
     }
 
     fn play_action(&mut self) {
-        self.play = !self.play;
-
         if self.player.is_some() {
+            self.play = !self.play;
+
             if self.stop {
                 self.stop = false;
 
                 let path = self.path.as_str();
+                let file = File::open(path).expect("File not found");
+                let decoder = Decoder::new(file).expect("Decoding error");
                 let mut player = self.player.as_ref().unwrap().clone();
-                player.create_stream(path);
+
+                player.create_stream(decoder);
 
                 self.player = Some(player);
                 self.player.as_ref().unwrap().play_stream();
