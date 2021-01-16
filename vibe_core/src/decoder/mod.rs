@@ -13,8 +13,7 @@ mod wav;
 
 /// Audio decoder
 ///
-/// For now support only mp3
-/// In the future will support FLAC, WAV, OGG and MP3
+/// For now support only FLAC, WAV, OGG and MP3
 pub struct Decoder<R>
 where
     R: Read + Seek,
