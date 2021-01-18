@@ -1,6 +1,20 @@
 # vibe
 
 A basic music player for .flac, .wav, .mp3, .ogg files
+The app has been tested on MacOs only.
+
+## Build/Run
+
+To build the app:
+`cargo build` in root
+
+To run the app:
+`cargo run` in root
+
+To have an executable file, you need `cargo bundle`
+Navigate to vibe_gui and type command: 
+`cargo bundle` for debug
+`cargo bundle --release` for release
 
 ## Things to do
 - [x] Implement mp3 decoder
@@ -15,3 +29,4 @@ A basic music player for .flac, .wav, .mp3, .ogg files
 - [] Find a way to update progress bar for time progression in audio
 - [x] Implement file selection
 - [] Do Error engineering
+- [] Test on other platform
