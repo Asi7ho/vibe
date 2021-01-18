@@ -94,10 +94,15 @@ where
                     * self.current_block_channel_len
                     + self.block_cursor / self.channels as usize;
 
-                let sample_float = self.current_block[real_cursor] as f32 / self.max_sample_value;
+                if self.current_block.len() == 0 {
+                    return Some(Ok(0.0 as f32));
+                } else {
+                    let sample_float =
+                        self.current_block[real_cursor] as f32 / self.max_sample_value;
 
-                self.block_cursor += 1;
-                return Some(Ok(sample_float));
+                    self.block_cursor += 1;
+                    return Some(Ok(sample_float));
+                }
             }
 
             self.block_cursor = 0;
