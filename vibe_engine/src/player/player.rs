@@ -11,10 +11,13 @@ pub struct Player {
 
 impl Player {
     #[inline]
+    /// Create a new empty player
     pub fn new() -> Result<Self, ()> {
         Ok(Self { stream: None })
     }
 
+    #[inline]
+    /// Create a new stream inside the player
     pub fn create_stream<R>(&mut self, decoder: Decoder<R>)
     where
         R: Read + Seek + Send + 'static,
@@ -22,18 +25,24 @@ impl Player {
         self.stream = Some(AudioStream::new::<f32, R>(decoder).unwrap());
     }
 
+    #[inline]
+    /// Play the stream
     pub fn play_stream(&self) {
         if self.stream.is_some() {
             self.stream.as_ref().unwrap().play();
         }
     }
 
+    #[inline]
+    /// Pause the stream
     pub fn pause_stream(&self) {
         if self.stream.is_some() {
             self.stream.as_ref().unwrap().pause();
         }
     }
 
+    #[inline]
+    /// Stop the stream
     pub fn stop_stream(&self) {
         if self.stream.is_some() {
             self.stream.as_ref().unwrap().stop();

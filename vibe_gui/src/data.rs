@@ -18,6 +18,8 @@ pub struct AppState {
 }
 
 impl AppState {
+    #[inline]
+    /// Create a new State for the App
     pub fn new(player: Player) -> Self {
         Self {
             player: Some(player),
@@ -30,6 +32,8 @@ impl AppState {
         }
     }
 
+    #[inline]
+    /// Initialize player with the state
     pub fn initialize_player(&mut self) {
         let path = self.path.as_str();
         let file = File::open(path).expect("File not found");
@@ -47,14 +51,20 @@ impl AppState {
         self.player = Some(player);
     }
 
+    #[inline]
+    /// Get the play/pause status
     pub fn get_play(&self) -> bool {
         self.play
     }
 
+    #[inline]
+    /// Get the audio progress
     pub fn get_progress(&self) -> f64 {
         self.progress
     }
 
+    #[inline]
+    /// Set audio filename for display
     pub fn set_filename(&mut self) {
         let path = self.path.as_str();
         let path = Path::new(path);
@@ -63,12 +73,16 @@ impl AppState {
         self.filename = String::from(filename);
     }
 
+    #[inline]
+    /// Set a new path for audio file
     pub fn set_path(&mut self, path: &str) {
         self.path = String::from(path);
     }
 
+    #[inline]
+    /// Play the audio after clicking on button
     fn play_action(&mut self) {
-        if self.player.is_some() {
+        if self.path.as_str() != "" {
             self.play = !self.play;
 
             if self.stop {
@@ -93,6 +107,8 @@ impl AppState {
         }
     }
 
+    #[inline]
+    /// Stop the audio after clicking on button
     fn stop_action(&mut self) {
         if !self.stop {
             self.stop = true;
@@ -104,6 +120,8 @@ impl AppState {
         }
     }
 
+    #[inline]
+    /// Select a new audio file after clicking on button
     pub fn select_path(ctx: &mut EventCtx, _data: &mut Self, _env: &Env) {
         let mp3 = FileSpec::new("MP3 file", &["mp3"]);
         let wav = FileSpec::new("WAV file", &["wav"]);

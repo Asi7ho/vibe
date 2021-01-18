@@ -14,3 +14,4 @@ A basic music player for .flac, .wav, .mp3, .ogg files
 - [] Implement a way to know the current time in the stream
 - [] Find a way to update progress bar for time progression in audio
 - [x] Implement file selection
+- [] Do Error engineering

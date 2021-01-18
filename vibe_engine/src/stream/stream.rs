@@ -19,7 +19,8 @@ pub struct AudioStream {
 }
 
 impl AudioStream {
-    /// Returns a new stream using the default output device.
+    #[inline]
+    /// Returns a new thread containing a stream.
     pub fn new<T, R>(decoder: Decoder<R>) -> Result<Self, ()>
     where
         T: cpal::Sample,
@@ -54,14 +55,20 @@ impl AudioStream {
         Ok(Self { tx_stream: tx })
     }
 
+    #[inline]
+    /// Send Play command
     pub fn play(&self) {
         self.tx_stream.send(Controls::Play).unwrap();
     }
 
+    #[inline]
+    /// Send Pause command
     pub fn pause(&self) {
         self.tx_stream.send(Controls::Pause).unwrap()
     }
 
+    #[inline]
+    /// Send Stop command
     pub fn stop(&self) {
         self.tx_stream.send(Controls::Stop).unwrap()
     }

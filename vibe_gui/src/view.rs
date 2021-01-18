@@ -5,12 +5,14 @@ use druid::{
 
 use crate::data::*;
 
+/// Get the filename
 fn track_info() -> impl Widget<AppState> {
     let filename = Label::raw().lens(AppState::filename);
 
     Flex::row().with_child(filename)
 }
 
+/// Get play/pause unicode
 fn get_play_unicode(play: bool) -> String {
     if play {
         return String::from("\u{23f8}");
@@ -19,6 +21,7 @@ fn get_play_unicode(play: bool) -> String {
     }
 }
 
+/// Create the buttons
 fn buttons() -> impl Widget<AppState> {
     let plus_button = Button::new("\u{2795}");
     let play_pause_button: Button<AppState> =
@@ -36,6 +39,7 @@ fn buttons() -> impl Widget<AppState> {
         .with_child(stop_controller)
 }
 
+/// Create the progress bar
 fn progress_bar() -> impl Widget<AppState> {
     let progressbar = ProgressBar::new().lens(AppState::progress);
 
@@ -46,6 +50,7 @@ fn progress_bar() -> impl Widget<AppState> {
         }))
 }
 
+/// Display track information (filename and progressbar)
 fn track() -> impl Widget<AppState> {
     Flex::column()
         .with_child(track_info())
@@ -53,6 +58,7 @@ fn track() -> impl Widget<AppState> {
         .with_child(progress_bar())
 }
 
+/// Build the ui
 pub fn build_ui() -> impl Widget<AppState> {
     Flex::row()
         .with_child(buttons())
