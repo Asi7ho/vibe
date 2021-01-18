@@ -16,8 +16,8 @@ To run the app:
 To have an executable file, you need `cargo bundle`
 
 Navigate to vibe_gui and type command: 
-`cargo bundle` for debug
-`cargo bundle --release` for release
+`cargo bundle` (for debug) or 
+`cargo bundle --release` (for release)
 
 ## Things to do
 - [x] Implement mp3 decoder
