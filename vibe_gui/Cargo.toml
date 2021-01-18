@@ -10,6 +10,7 @@ description = "Music Player"
 [package.metadata.bundle]
 name = "vibe"
 identifier = "io.github.Asi7ho.vibe"
+icon = ["assets/icon.png"]
 
 [dependencies]
 vibe_core = { path = "../vibe_core" }
