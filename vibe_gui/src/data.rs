@@ -1,6 +1,6 @@
 use std::{fs::File, path::Path};
 
-use druid::{Data, Env, EventCtx, Lens};
+use druid::{Command, Data, Env, EventCtx, FileDialogOptions, FileSpec, Lens, Target};
 use vibe_core::decoder::Decoder;
 use vibe_engine::player::Player;
 
@@ -18,43 +18,33 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new<P: AsRef<Path>>(mut player: Player, path: P) -> Self {
-        if path.as_ref().is_file() {
-            let filename = path
-                .as_ref()
-                .file_name()
-                .and_then(|filename| filename.to_str())
-                .unwrap();
-
-            let path = path.as_ref().to_str().unwrap();
-            let file = File::open(path).expect("File not found");
-            let decoder = Decoder::new(file).expect("Decoding error");
-            let duration = decoder.info().duration().unwrap();
-
-            player.create_stream(decoder);
-
-            let duration = duration.as_millis() as u64;
-
-            Self {
-                player: Some(player),
-                play: false,
-                stop: false,
-                filename: filename.into(),
-                path: path.into(),
-                progress: 0.0,
-                duration,
-            }
-        } else {
-            Self {
-                player: None,
-                play: false,
-                stop: false,
-                filename: "".into(),
-                path: "".into(),
-                progress: 0.0,
-                duration: 0,
-            }
+    pub fn new(player: Player) -> Self {
+        Self {
+            player: Some(player),
+            play: false,
+            stop: false,
+            filename: "".into(),
+            path: "".into(),
+            progress: 0.0,
+            duration: 0,
         }
+    }
+
+    pub fn initialize_player(&mut self) {
+        let path = self.path.as_str();
+        let file = File::open(path).expect("File not found");
+
+        self.stop = true;
+        self.play = false;
+        self.set_filename();
+
+        let decoder = Decoder::new(file).expect("Decoding error");
+
+        let mut player = self.player.as_ref().unwrap().clone();
+
+        player.create_stream(decoder);
+
+        self.player = Some(player);
     }
 
     pub fn get_play(&self) -> bool {
@@ -63,6 +53,18 @@ impl AppState {
 
     pub fn get_progress(&self) -> f64 {
         self.progress
+    }
+
+    pub fn set_filename(&mut self) {
+        let path = self.path.as_str();
+        let path = Path::new(path);
+        let filename = path.file_name().and_then(|f| f.to_str()).unwrap();
+
+        self.filename = String::from(filename);
+    }
+
+    pub fn set_path(&mut self, path: &str) {
+        self.path = String::from(path);
     }
 
     fn play_action(&mut self) {
@@ -102,10 +104,23 @@ impl AppState {
         }
     }
 
-    fn select_path(&mut self) {}
+    pub fn select_path(ctx: &mut EventCtx, _data: &mut Self, _env: &Env) {
+        let mp3 = FileSpec::new("MP3 file", &["mp3"]);
+        let wav = FileSpec::new("WAV file", &["wav"]);
+        let ogg = FileSpec::new("OGG file", &["ogg"]);
+        let flac = FileSpec::new("FLAC file", &["flac"]);
 
-    pub fn get_path(_ctx: &mut EventCtx, data: &mut Self, _env: &Env) {
-        data.select_path();
+        let open_dialog_options = FileDialogOptions::new()
+            .allowed_types(vec![mp3, wav, ogg, flac])
+            .name_label("Source")
+            .title("Choose a file")
+            .button_text("Playback");
+
+        ctx.submit_command(Command::new(
+            druid::commands::SHOW_OPEN_PANEL,
+            open_dialog_options.clone(),
+            Target::Auto,
+        ))
     }
 
     pub fn toggle_play(_ctx: &mut EventCtx, data: &mut Self, _env: &Env) {

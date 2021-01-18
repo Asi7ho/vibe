@@ -13,4 +13,4 @@ A basic music player for .flac, .wav, .mp3, .ogg files
 - [] Find a better way to compute audio duration for mp3 and ogg files
 - [] Implement a way to know the current time in the stream
 - [] Find a way to update progress bar for time progression in audio
-- [] Implement file selection
+- [x] Implement file selection

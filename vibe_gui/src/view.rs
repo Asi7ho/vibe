@@ -25,7 +25,7 @@ fn buttons() -> impl Widget<AppState> {
         Button::dynamic(|data: &AppState, _| format!("{}", get_play_unicode(data.get_play())));
     let stop_button = Button::new("\u{23f9}");
 
-    let plus_controller = plus_button.on_click(AppState::get_path);
+    let plus_controller = plus_button.on_click(AppState::select_path);
     let play_pause_controller = play_pause_button.on_click(AppState::toggle_play);
     let stop_controller = stop_button.on_click(AppState::toggle_stop);
 
