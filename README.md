@@ -8,10 +8,13 @@ The app has been tested on MacOs only.
 To build the app:
 `cargo build` in root
 
+
 To run the app:
 `cargo run` in root
 
+
 To have an executable file, you need `cargo bundle`
+
 Navigate to vibe_gui and type command: 
 `cargo bundle` for debug
 `cargo bundle --release` for release
