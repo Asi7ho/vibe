@@ -1,6 +1,7 @@
 # vibe
 
 A basic music player for .flac, .wav, .mp3, .ogg files
+
 The app has been tested on MacOs only.
 
 ## Build/Run
