@@ -43,12 +43,15 @@ impl AppState {
         self.set_filename();
 
         let decoder = Decoder::new(file).expect("Decoding error");
+        let info = decoder.info();
+        let duration = info.duration().unwrap();
 
         let mut player = self.player.as_ref().unwrap().clone();
 
         player.create_stream(decoder);
 
         self.player = Some(player);
+        self.duration = duration.as_millis() as _;
     }
 
     #[inline]
