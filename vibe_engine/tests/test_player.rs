@@ -9,7 +9,7 @@ mod tests_player {
     #[test]
 
     fn test_player() {
-        let mut player = Player::new().unwrap();
+        let mut player = Player::new();
         let file = File::open("tests/sounds/Test1.mp3").expect("File not found");
         let decoder = Decoder::new(file).expect("Decoding error");
         player.create_stream(decoder);

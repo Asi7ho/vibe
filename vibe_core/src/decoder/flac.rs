@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use claxon::FlacReader;
 
-use crate::{AudioFormat, AudioInfo, Sample};
+use crate::{info::DecoderError, AudioFormat, AudioInfo, Sample};
 
 /// Decoder for FLAC files
 pub struct FlacDecoder<R>
@@ -83,7 +83,7 @@ impl<R> Iterator for FlacDecoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     /// Iterate over the samples and convert it into f32 sample
     #[inline]

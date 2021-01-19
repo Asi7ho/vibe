@@ -14,7 +14,7 @@ mod tests_stream {
 
         let duration = info.duration().unwrap();
 
-        let audio_stream = AudioStream::new::<f32, File>(decoder).expect("Stream error");
+        let audio_stream = AudioStream::new::<f32, File>(decoder);
 
         audio_stream.play();
 
@@ -39,7 +39,7 @@ mod tests_stream {
 
         let duration = info.duration().unwrap();
 
-        let audio_stream = AudioStream::new::<f32, File>(decoder).expect("Stream error");
+        let audio_stream = AudioStream::new::<f32, File>(decoder);
 
         audio_stream.play();
 
@@ -64,7 +64,7 @@ mod tests_stream {
 
         let duration = info.duration().unwrap();
 
-        let audio_stream = AudioStream::new::<f32, File>(decoder).expect("Stream error");
+        let audio_stream = AudioStream::new::<f32, File>(decoder);
 
         audio_stream.play();
 
@@ -89,7 +89,7 @@ mod tests_stream {
 
         let duration = info.duration().unwrap();
 
-        let audio_stream = AudioStream::new::<f32, File>(decoder).expect("Stream error");
+        let audio_stream = AudioStream::new::<f32, File>(decoder);
 
         audio_stream.play();
 

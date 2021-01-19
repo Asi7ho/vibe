@@ -12,8 +12,8 @@ pub struct Player {
 impl Player {
     #[inline]
     /// Create a new empty player
-    pub fn new() -> Result<Self, ()> {
-        Ok(Self { stream: None })
+    pub fn new() -> Self {
+        Self { stream: None }
     }
 
     #[inline]
@@ -22,7 +22,7 @@ impl Player {
     where
         R: Read + Seek + Send + 'static,
     {
-        self.stream = Some(AudioStream::new::<f32, R>(decoder).unwrap());
+        self.stream = Some(AudioStream::new::<f32, R>(decoder));
     }
 
     #[inline]

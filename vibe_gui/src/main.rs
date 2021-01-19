@@ -15,7 +15,7 @@ pub fn main() {
         .title("Vibe Player")
         .window_size((400.0, 50.0));
 
-    let player = Player::new().unwrap();
+    let player = Player::new();
     let initial_state = AppState::new(player);
 
     AppLauncher::with_window(main_window)

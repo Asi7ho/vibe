@@ -1,6 +1,6 @@
 use std::io::{Read, Seek};
 
-use crate::{AudioInfo, Sample};
+use crate::{info::DecoderError, AudioInfo, Sample};
 
 #[cfg(feature = "flac")]
 mod flac;
@@ -43,7 +43,7 @@ impl<R> Iterator for Decoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -126,7 +126,7 @@ impl<R> Iterator for FormatDecoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {

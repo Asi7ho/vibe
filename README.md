@@ -32,5 +32,5 @@ Navigate to vibe_gui and type command:
 - [] Implement a way to know the current time in the stream
 - [] Find a way to update progress bar for time progression in audio
 - [x] Implement file selection
-- [] Do Error engineering
+- [x] Do Error engineering
 - [] Test on other platform

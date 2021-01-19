@@ -21,7 +21,7 @@ pub struct AudioStream {
 impl AudioStream {
     #[inline]
     /// Returns a new thread containing a stream.
-    pub fn new<T, R>(decoder: Decoder<R>) -> Result<Self, ()>
+    pub fn new<T, R>(decoder: Decoder<R>) -> Self
     where
         T: cpal::Sample,
         R: Read + Seek + Send + 'static,
@@ -31,20 +31,20 @@ impl AudioStream {
         std::thread::spawn(move || {
             let stream = create_stream::<T, R>(decoder);
 
-            stream.pause().unwrap();
+            stream.pause().expect("Pause error");
 
             println!("Wait for reception");
             while let Ok(res) = rx.recv() {
                 println!("{:?}", res);
                 match res {
                     Controls::Pause => {
-                        stream.pause().unwrap();
+                        stream.pause().expect("Pause error");
                     }
                     Controls::Play => {
-                        stream.play().unwrap();
+                        stream.play().expect("Play error");
                     }
                     Controls::Stop => {
-                        stream.pause().unwrap();
+                        stream.pause().expect("Stop error");
                         drop(stream);
                         break;
                     }
@@ -52,7 +52,7 @@ impl AudioStream {
             }
         });
 
-        Ok(Self { tx_stream: tx })
+        Self { tx_stream: tx }
     }
 
     #[inline]
@@ -80,9 +80,9 @@ where
     R: Read + Seek,
 {
     for frame in output.chunks_mut(channels) {
-        let value = &decoder.next();
+        let value = decoder.next();
 
-        if (*value).is_none() {
+        if (value).is_none() {
             *ended = true;
         }
 
@@ -92,8 +92,8 @@ where
                 *sample = value;
             }
         } else {
-            let value = &value.unwrap().expect("Error value");
-            let value: T = cpal::Sample::from::<f32>(value);
+            let value = value.unwrap().expect("Steam Error");
+            let value: T = cpal::Sample::from::<f32>(&value);
             for sample in frame.iter_mut() {
                 *sample = value;
             }

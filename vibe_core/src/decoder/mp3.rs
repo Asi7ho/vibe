@@ -2,7 +2,7 @@ use minimp3::{Decoder, Error, Frame};
 use std::io::{Read, Seek, SeekFrom};
 use std::time::Duration;
 
-use crate::{AudioFormat, AudioInfo, Sample};
+use crate::{info::DecoderError, AudioFormat, AudioInfo, Sample};
 
 ///Decoder for MP3 files
 pub struct Mp3Decoder<R>
@@ -70,7 +70,7 @@ impl<R> Iterator for Mp3Decoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -93,7 +93,16 @@ where
                     }
                     Err(Error::SkippedData) => continue,
                     Err(Error::Eof) => return None,
-                    Err(e) => panic!("Error: {:?}", e),
+                    Err(e) => {
+                        let error = match e {
+                            Error::Io(io_err) => DecoderError::IOError(io_err),
+                            Error::InsufficientData => {
+                                DecoderError::FormatError(format!("mp3: insufficient data"))
+                            }
+                            _ => unimplemented!(),
+                        };
+                        return Some(Err(error));
+                    }
                 }
             };
         }

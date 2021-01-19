@@ -5,9 +5,9 @@ use std::{
 
 use std::time::Duration;
 
-use lewton::inside_ogg::OggStreamReader;
+use lewton::{inside_ogg::OggStreamReader, VorbisError};
 
-use crate::{AudioFormat, AudioInfo, Sample};
+use crate::{info::DecoderError, AudioFormat, AudioInfo, Sample};
 
 pub struct VorbisDecoder<R>
 where
@@ -72,7 +72,7 @@ impl<R> Iterator for VorbisDecoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -89,7 +89,20 @@ where
                         self.packet_cursor = 0;
                         self.current_packet = match self.reader.read_dec_packet_itl() {
                             Ok(packet) => packet,
-                            Err(_) => return Some(Err(())),
+                            Err(e) => {
+                                let error = match e {
+                                    VorbisError::BadAudio(err) => DecoderError::FormatError(
+                                        format!("ogg: bad audio: {}", err),
+                                    ),
+                                    VorbisError::BadHeader(err) => DecoderError::FormatError(
+                                        format!("ogg: bad header: {}", err),
+                                    ),
+                                    VorbisError::OggError(err) => {
+                                        DecoderError::FormatError(format!("ogg: {}", err))
+                                    }
+                                };
+                                return Some(Err(error));
+                            }
                         };
                     }
 
@@ -101,7 +114,20 @@ where
                     self.packet_cursor = 0;
                     self.current_packet = match self.reader.read_dec_packet_itl() {
                         Ok(packet) => packet,
-                        Err(_) => return Some(Err(())),
+                        Err(e) => {
+                            let error = match e {
+                                VorbisError::BadAudio(err) => {
+                                    DecoderError::FormatError(format!("ogg: bad audio: {}", err))
+                                }
+                                VorbisError::BadHeader(err) => {
+                                    DecoderError::FormatError(format!("ogg: bad header: {}", err))
+                                }
+                                VorbisError::OggError(err) => {
+                                    DecoderError::FormatError(format!("ogg: {}", err))
+                                }
+                            };
+                            return Some(Err(error));
+                        }
                     };
                     continue;
                 }

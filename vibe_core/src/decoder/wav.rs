@@ -1,9 +1,9 @@
 use std::io::{Read, Seek, SeekFrom};
 use std::time::Duration;
 
-use hound::{SampleFormat, WavReader, WavSpec};
+use hound::{Error, SampleFormat, WavReader, WavSpec};
 
-use crate::{AudioFormat, AudioInfo, Sample};
+use crate::{info::DecoderError, AudioFormat, AudioInfo, Sample};
 
 /// Decoder for WAV files
 pub struct WavDecoder<R>
@@ -55,7 +55,7 @@ impl<R> Iterator for WavDecoder<R>
 where
     R: Read + Seek,
 {
-    type Item = Result<Sample, ()>;
+    type Item = Result<Sample, DecoderError>;
 
     /// Get the next sample and convert it into f32 sample
     #[inline]
@@ -66,32 +66,32 @@ where
                 .reader
                 .samples::<i8>()
                 .next()
-                .map(|s| s.map(|x| x as f32 / i8::MAX as f32).map_err(|_| ())),
+                .map(|s| s.map(|x| x as f32 / i8::MAX as f32).map_err(get_error)),
             (SampleFormat::Int, 16) => self
                 .reader
                 .samples::<i16>()
                 .next()
-                .map(|s| s.map(|x| x as f32 / i16::MAX as f32).map_err(|_| ())),
+                .map(|s| s.map(|x| x as f32 / i16::MAX as f32).map_err(get_error)),
             (SampleFormat::Int, 24) => {
                 const MAX_I24: i32 = 0x7fffff;
                 self.reader
                     .samples::<i32>()
                     .next()
-                    .map(|s| s.map(|x| x as f32 / MAX_I24 as f32).map_err(|_| ()))
+                    .map(|s| s.map(|x| x as f32 / MAX_I24 as f32).map_err(get_error))
             }
             (SampleFormat::Int, 32) => self
                 .reader
                 .samples::<i32>()
                 .next()
-                .map(|s| s.map(|x| x as f32 / i32::MAX as f32).map_err(|_| ())),
+                .map(|s| s.map(|x| x as f32 / i32::MAX as f32).map_err(get_error)),
             (SampleFormat::Float, 32) => self
                 .reader
                 .samples::<f32>()
                 .next()
-                .map(|s| s.map_err(|_| ())),
+                .map(|s| s.map_err(get_error)),
             (other_format, other_bps) => {
                 panic!(
-                    "Error wav: format '{}-bit {:?}' is not supported",
+                    "wav: format '{}-bit {:?}' is not supported",
                     other_bps, other_format
                 )
             }
@@ -109,4 +109,19 @@ where
     data.seek(SeekFrom::Start(stream_pos)).unwrap();
 
     return is_wav;
+}
+
+fn get_error(error: Error) -> DecoderError {
+    match error {
+        Error::IoError(io_err) => DecoderError::IOError(io_err),
+        Error::FormatError(fmt_err) => DecoderError::FormatError(format!("wav: {}", fmt_err)),
+        Error::Unsupported => DecoderError::FormatError("wav: unsupported format".to_owned()),
+        Error::InvalidSampleFormat => {
+            DecoderError::FormatError("wav: invalid sample format".to_owned())
+        }
+        Error::TooWide => DecoderError::FormatError(
+            "wav: decoded samples are too wide for destination type".to_owned(),
+        ),
+        _ => unreachable!(),
+    }
 }
