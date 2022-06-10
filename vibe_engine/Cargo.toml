@@ -10,4 +10,4 @@ edition = "2018"
 vibe_core = { path = "../vibe_core" }
 
 cpal = "0.13.1"
-crossbeam = "0.8.0"
+crossbeam = "0.8.1"
